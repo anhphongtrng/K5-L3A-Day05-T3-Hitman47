@@ -89,12 +89,38 @@ Ngược lại, case 5 là tình huống AI đã đổi nhầm, gây ra hậu qu
 Do đó, nhóm chọn case 5 để phân tích sâu cách xử lý hậu quả khi AI đã sai, còn case 7 được dùng để kiểm tra khả năng phòng ngừa lỗi trước khi thao tác.
 
 ## §3. Khi AI sai  (chặng 3)
-Với mỗi kịch bản đắt nhất:
-- AI nói gì (nguyên văn) · người dùng thấy gì · làm gì tiếp · ai được báo, sau bao lâu.
-- Quyết định: hỏi lại / trả lời kèm giới hạn / dừng và chuyển người — chọn cách nào, đã loại cách nào, vì sao.
-- Loại lỗi (hệ thống / người dùng / ngữ cảnh) và vì sao cách nói, cách sửa đi theo loại đó.
-- 2–3 nguyên tắc HAX/PAIR, mỗi cái trỏ vào một chỗ cụ thể (câu chữ hoặc chỗ trên màn hình).
-- Lỗi nào sửa câu chữ không cứu được (nếu có), và thiết kế cứu nó thế nào.
+
+Kịch bản 4: đã gửi yêu cầu hoàn vé, khách đổi ý
+
+- **AI nói gì (nguyên văn):** "Mình đã hủy yêu cầu hoàn vé cho bạn và sẽ đổi sang BM 201 lúc 07:00."
+- **Người dùng thấy gì:** dòng "Yêu cầu hoàn: đã gửi, không thể hủy" dưới mã TRV-7Q2K. Nếu không để ý dòng này, khách có thể tin vé còn nguyên và bỏ qua thời hạn xử lý hoàn tiền.
+- **Làm gì tiếp:** bấm "Chuyển nhân viên". Khung chuyển hiện mã đặt chỗ, trạng thái yêu cầu hoàn và yêu cầu mới của khách.
+- **Ai được báo, sau bao lâu:** nhân viên hỗ trợ nhận ca ngay khi khách chuyển.
+- **Quyết định:** dừng và chuyển người.
+  - Đã loại "hỏi lại" ("Bạn có chắc muốn hủy hoàn không?"): khách không thể hủy, câu hỏi chỉ khiến họ tưởng còn đường rút.
+  - Đã loại "trả lời kèm giới hạn" ("mình sẽ cố hủy yêu cầu"): là hứa điều không làm được.
+- **Loại lỗi:** chủ yếu là **hệ thống**, vì AI đưa ra một hành động không có tool tương ứng. Có một phần **ngữ cảnh**, vì khách đổi ý sau khi yêu cầu đã gửi và hệ thống chỉ biết điều đó khi tra cứu. Cách nói phải thẳng: AI không có quyền hủy yêu cầu đã gửi, không xin lỗi vòng vo. Cách sửa nằm ở thiết kế: AI đọc trạng thái hoàn qua 'tra_cuu_dat_cho' trước khi nói về việc đổi chuyến.
+- **Nguyên tắc HAX/PAIR:**
+  - **G1 (làm rõ hệ thống làm được gì):** dòng dưới khung chat "Mình không có quyền hủy yêu cầu hoàn đã gửi. Bạn có thể nhờ nhân viên xem xét."
+  - **G11 (giải thích vì sao):** dòng "Đã gửi ngày 12/11, không thể hủy" ngay dưới mã đặt chỗ.
+  - **PAIR Errors và Graceful failure:** nút "Chuyển nhân viên" đặt ngay dưới câu trả lời, mang theo mã và trạng thái.
+- **Lỗi không cứu được bằng câu chữ:** AI đã hứa hủy, khách đã tin, và sau đó phải có người gỡ. Chỉ thiết kế mới ngăn được: AI không được nói về việc hủy hoàn khi tool không trả về một hành động hủy nào.
+
+Kịch bản 5: AI đổi nhầm chuyến
+
+- **AI nói gì (nguyên văn):** "Xin lỗi bạn, mình sẽ đổi lại về BM 201 lúc 07:00 miễn phí cho bạn ngay."
+- **Người dùng thấy gì:** dòng "Đã đổi: BM 205, 13/11 09:30" và nhãn "Đã dùng lần đổi miễn phí". Nếu chỉ đọc lời xin lỗi, khách sẽ nghĩ việc đã được sửa.
+- **Làm gì tiếp:** bấm "Chuyển nhân viên". Khung chuyển hiện chuyến gốc BM 213, chuyến đã đổi BM 205 lúc 09:30, chuyến khách muốn BM 201 lúc 07:00 và trạng thái lần đổi miễn phí.
+- **Ai được báo, sau bao lâu:** nhân viên nhận ca ngay khi khách chuyển, kèm nhật ký đổi (thời điểm, chuyến cũ, chuyến mới, tin nhắn đã kích hoạt).
+- **Quyết định:** dừng và chuyển người.
+  - Đã loại "hỏi lại": khách đã nói rõ là sai và cần chuyến 07:00, hỏi thêm chỉ kéo dài thời gian chờ.
+  - Đã loại "trả lời kèm giới hạn" ("mình có thể đổi lại"): là lời hứa sai, và gọi 'doi_chuyen_bay' thêm lần nữa có thể mất thêm phí hoặc chuyến đã hết chỗ.
+- **Loại lỗi:** chủ yếu là **hệ thống**, vì AI đổi chuyến khi có hai lựa chọn sáng 13/11 còn chỗ mà không hỏi lại (lỗi đã nêu ở lát cắt S7). Có một phần **ngữ cảnh**: "sáng mai" có hai nghĩa và khách không biết hệ thống đã chọn chuyến nào. Cách nói là nhận đúng lỗi về phía hệ thống, không đổ cho khách, không hứa đổi lại. Cách sửa là đổi thiết kế: 'doi_chuyen_bay' phải có bước xác nhận chọn chuyến, kèm cảnh báo lần đổi miễn phí.
+- **Nguyên tắc HAX/PAIR:**
+  - **G10 (thu hẹp phạm vi khi nghi ngờ):** sau khi khách phản đối, AI dừng mọi thao tác và khung chat chỉ còn nút "Chuyển nhân viên".
+  - **G11 (giải thích vì sao):** dòng "Tôi chọn BM 205 vì đây là chuyến đầu tiên còn chỗ sau 'sáng mai'" nằm ngay dưới thông báo đã đổi.
+  - **PAIR Errors và Graceful failure:** thẻ "Đã dùng lần đổi miễn phí" đặt cạnh nút "Chuyển nhân viên".
+- **Lỗi không cứu được bằng câu chữ:** không câu xin lỗi nào khôi phục được lần đổi miễn phí đã mất. Thiết kế cứu được là bước xác nhận trước khi đổi, hiện rõ "lần đổi miễn phí còn lại: 1 → 0", và nếu AI không chắc về chuyến thì phải hỏi lại chứ không gọi tool.
 
 ## §4. Mức tự chủ  (chặng 4)
 Với mỗi tool:
