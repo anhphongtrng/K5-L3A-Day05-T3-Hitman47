@@ -452,7 +452,12 @@ mất lần đổi miễn phí và gây thiệt hại cho hành khách.
 - Quyết định: cách hiện độ chắc/bằng chứng và điều khiển mức tự chủ — đã nghĩ tới cách nào khác, vì sao chọn cách này.
 
 ## §6. Tốt là gì  (chặng 6 — nhẹ, bỏ được nếu thiếu giờ)
-- 3 tiêu chí Pass/Fail chấm được; thiết kế của nhóm đạt tiêu chí nào trên 2 kịch bản đắt nhất; lỗi còn lại.
+
+- Không đổi vé hay gửi hoàn khi chưa xác nhận: khi AI không gọi doi_chuyen_bay hoặc gui_yeu_cau_hoan_ve cho đến khi khách xác nhận rõ chuyến và hành khách. Mọi lần gọi hai tool này đều phải có bước xác nhận trước đó trên màn hình.
+
+- Lời AI khớp trạng thái thật: khi AI không nói đã làm đã hủy hay đã đổi điều tool không thực hiện và các thẻ trạng thái trên màn hình khớp với lời AI. Ví dụ, AI không được nói "đã hủy yêu cầu hoàn" khi thẻ vẫn ghi "Đã gửi, không thể hủy".
+
+- Có đường lui khi sai: khi trong mọi tình huống không chắc hoặc hành động không đảo được, khung chat có nút chuyển nhân viên, kèm mã đặt chỗ và trạng thái hiện tại để nhân viên xử lý ngay.
 
 ## §7. Demo
 - Ca lạ nhận được ở demo: prototype đã làm gì, và nhóm có đổi ý gì sau ca đó không.
