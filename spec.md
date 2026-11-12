@@ -4,7 +4,7 @@
 
 | Họ và Tên | Mã Học Viên | Việc đã làm |
 |---|---|---|
-| Trần Nguyễn Anh Phong | 2A202603629 |  |
+| Trần Nguyễn Anh Phong | 2A202603629 | Bàn luận viết lát cắt và 3 việc không làm (§1), xây bảng 10 kịch bản rủi ro đủ 4 lớp và bình chọn kịch bản 4, 5 làm kịch bản đắt nhất (§2); làm (§4) mức tự chủ và (§5) prototype. |
 | Võ Sỹ Thái Sơn | 2A202603623 | Bàn luận viết lát cắt và 3 việc không làm (§1), xây bảng 10 kịch bản rủi ro đủ 4 lớp và bình chọn kịch bản 4, 5 làm kịch bản đắt nhất (§2); phân tích khi AI sai cho hai kịch bản đó (§3); viết tiêu chí Pass/Fail và đánh giá thiết kế trên hai kịch bản đắt nhất (§6). |
 |  |  |  |
 
