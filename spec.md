@@ -4,7 +4,7 @@
 
 | Họ và Tên | Mã Học Viên | Việc đã làm |
 |---|---|---|
-|  |  |  |
+| Trần Nguyễn Anh Phong | 2A202603629 |  |
 | Võ Sỹ Thái Sơn | 2A202603623 |  |
 |  |  |  |
 
@@ -132,6 +132,319 @@ Thêm:
 - Thử mức đã đặt trên 2 kịch bản đắt nhất + 1 kịch bản bình thường: cái sai có bị chặn không? còn việc nào làm khi lẽ ra phải hỏi? người dùng bình thường có phải chờ vô ích không?
 - Luật thêm hoặc tool tách bước (nếu có), và vì sao.
 - Một mức tự chủ đã đổi lời hứa nào với người dùng.
+
+### 4.1. Bảng phân quyền tự chủ của các tool
+
+Nhóm phân quyền cho 5 tool dựa trên ba yếu tố:
+
+- **Cost-of-error:** Nếu AI thao tác sai, ai chịu thiệt hại và mức độ thiệt hại như thế nào?
+- **Khả năng đảo ngược:** Hành động có thể hoàn tác hay khôi phục trạng thái ban đầu không?
+- **Chi phí chờ duyệt:** Nếu phải chờ người dùng hoặc nhân viên xác nhận, khách có thể mất cơ hội gì?
+
+| Tool | Mức tự chủ nhóm chọn | Lý do chính |
+|---|---|---|
+| `tra_cuu_dat_cho` | Tự làm | Chỉ đọc dữ liệu, không thay đổi vé hoặc tiền. |
+| `giu_cho_chuyen_moi` | Tự làm có điều kiện | Giữ chỗ 20 phút, chưa đổi vé và tự hết hạn. |
+| `doi_chuyen_bay` | Cần người duyệt | Dùng lần đổi miễn phí duy nhất, khó hoàn tác. |
+| `gui_yeu_cau_hoan_ve` | Cần người duyệt | Yêu cầu hoàn đã gửi thì không thể hủy. |
+| `chuyen_nhan_vien` | Tự làm | Không thay đổi vé, có thể chuyển hỗ trợ khi AI không xử lý được. |
+
+---
+
+### 4.2. Phân tích chi tiết từng tool
+
+#### Tool 1 — `tra_cuu_dat_cho`
+
+**Mức nhóm chọn: TỰ LÀM**
+
+**Lý do theo cost-of-error:**
+- **Sai thì ai chịu gì:** Nếu AI đọc hoặc diễn giải sai dữ liệu, hành khách có thể nhận thông tin sai về giờ bay, chỗ trống và quyền lợi. Ví dụ case 6: BM 217 chỉ còn 1 chỗ nhưng AI hiểu nhầm là đủ cho hai người.
+- **Đảo lại được không:** Tool chỉ đọc, không thay đổi vé nên không có giao dịch cần hoàn tác. Thông tin sai có thể được tra cứu và đính chính.
+- **Chờ người thì mất gì:** Nếu mỗi lần tra cứu đều phải có nhân viên duyệt, hành khách mất thời gian và có thể bỏ lỡ chuyến thay thế còn chỗ.
+
+**Phương án đã cân nhắc:**
+- Tự làm: AI tra cứu ngay khi khách yêu cầu hỗ trợ.
+- Cần người duyệt: Nhân viên duyệt mỗi lần tra cứu.
+- Cấm: AI không được tra cứu thông tin đặt chỗ.
+
+**Quyết định:** Chọn tự làm vì tool chỉ đọc. Loại cần duyệt vì gây chậm không cần thiết; loại cấm vì AI sẽ không có dữ liệu đáng tin cậy để đề xuất chuyến bay.
+
+**Luật an toàn:** Chỉ hiển thị dữ liệu thuộc đặt chỗ của người dùng đã được hệ thống xác thực. Nếu tool lỗi hoặc thiếu dữ liệu, AI phải thông báo giới hạn thay vì tự đoán.
+
+---
+
+#### Tool 2 — `giu_cho_chuyen_moi`
+
+**Mức nhóm chọn: TỰ LÀM CÓ ĐIỀU KIỆN**
+
+**Lý do theo cost-of-error:**
+- **Sai thì ai chịu gì:** Nếu AI giữ nhầm chuyến, khách có thể tưởng đã giữ đúng chỗ và bỏ lỡ phương án phù hợp hơn. Ví dụ case 6: BM 217 chỉ còn 1 chỗ, không đủ cho cả hai hành khách.
+- **Đảo lại được không:** Tool chỉ giữ chỗ trong 20 phút, chưa đổi vé và tự nhả khi hết hạn. Tuy nhiên, dữ liệu đề không cung cấp tool nhả chỗ thủ công.
+- **Chờ người thì mất gì:** Nếu phải chờ nhân viên duyệt trước khi giữ, chuyến phù hợp có thể hết chỗ trong lúc khách đang cân nhắc.
+
+**Phương án đã cân nhắc:**
+- Tự làm không điều kiện: AI có thể giữ bất kỳ chuyến nào.
+- Tự làm có điều kiện: AI chỉ giữ khi đã xác định chuyến phù hợp và đủ chỗ.
+- Cần người duyệt: Khách hoặc nhân viên phải duyệt trước khi giữ.
+- Cấm: AI không được giữ chỗ.
+
+**Quyết định:** Chọn tự làm có điều kiện để cân bằng tốc độ và an toàn. Loại tự làm không điều kiện vì có thể giữ nhầm chuyến. Loại cần nhân viên duyệt và cấm vì có nguy cơ khiến khách mất chỗ trong lúc chờ.
+
+**Điều kiện bắt buộc:**
+1. Kiểm tra số ghế đủ cho những hành khách dự kiến đi cùng.
+2. Chỉ giữ chuyến phù hợp với thời gian hoặc yêu cầu khách đã cung cấp.
+3. Nếu có nhiều chuyến phù hợp nhưng ý định chưa rõ, hỏi khách chọn chuyến trước khi giữ.
+4. Thông báo chính xác chuyến đã giữ, số người, trạng thái thành công và thời hạn 20 phút.
+5. Không tự chuyển từ giữ chỗ sang đổi vé.
+6. Khi giữ chỗ hết hạn, phải kiểm tra lại dữ liệu; không khẳng định chỗ vẫn còn.
+
+---
+
+#### Tool 3 — `doi_chuyen_bay`
+
+**Mức nhóm chọn: CẦN NGƯỜI DUYỆT**
+
+**Người duyệt:** Hành khách có quyền xác nhận thay đổi đặt chỗ.
+
+**Người duyệt nhìn thấy:**
+- Mã đặt chỗ TRV-7Q2K.
+- Chuyến cũ BM 213 đã bị hủy.
+- Chuyến mới được chọn, gồm mã chuyến, ngày và giờ khởi hành.
+- Danh sách hành khách được áp dụng.
+- Cảnh báo sử dụng lần đổi miễn phí duy nhất.
+- Nút "Xác nhận đổi chuyến" và "Quay lại".
+
+**Nếu quá hạn hoặc không xác nhận:**
+- Không gọi `doi_chuyen_bay`.
+- Nếu đang giữ chỗ, hiển thị thời hạn giữ chỗ 20 phút.
+- Khi giữ chỗ hết hạn, không tự đổi vé; yêu cầu tra cứu lại số ghế trước khi tiếp tục.
+
+**Lý do theo cost-of-error:**
+- **Sai thì ai chịu gì:** Hành khách có thể bị đổi sai giờ, lỡ công việc và mất lần đổi miễn phí duy nhất. Case 5 mô tả AI đổi sang BM 205 lúc 09:30 khi khách muốn BM 201 lúc 07:00.
+- **Đảo lại được không:** Khó hoàn tác. Đề không cung cấp tool khôi phục vé hoặc bảo đảm đổi lại miễn phí.
+- **Chờ người thì mất gì:** Khách có thể mất chỗ trong lúc xác nhận, nhưng rủi ro này được giảm bằng tool giữ chỗ 20 phút.
+
+**Phương án đã cân nhắc:**
+- Tự làm: AI đổi ngay khi hiểu yêu cầu.
+- Cần người duyệt: AI chuẩn bị thông tin, khách xác nhận trước khi đổi.
+- Cấm: AI không được đổi vé.
+
+**Quyết định:** Chọn cần người duyệt. Loại tự làm vì hậu quả đổi nhầm rất đắt; loại cấm vì khách sẽ phải thực hiện mọi bước thủ công hoặc chờ nhân viên, đi ngược mục tiêu hỗ trợ nhanh khi chuyến bị hủy.
+
+---
+
+#### Tool 4 — `gui_yeu_cau_hoan_ve`
+
+**Mức nhóm chọn: CẦN NGƯỜI DUYỆT**
+
+**Người duyệt:** Hành khách có quyền xác nhận yêu cầu hoàn vé.
+
+**Người duyệt nhìn thấy:**
+- Mã đặt chỗ.
+- Danh sách hành khách được yêu cầu hoàn.
+- Phạm vi yêu cầu hoàn.
+- Chính sách hoàn toàn bộ do chuyến bị hủy.
+- Cảnh báo "Yêu cầu hoàn vé sau khi gửi không thể hủy".
+- Thông tin phương thức và thời gian hoàn nếu đã được xác minh.
+- Nút "Xác nhận gửi yêu cầu hoàn" và "Quay lại".
+
+Theo thông tin sản phẩm nền, xử lý hoàn có thể kéo dài tới 90 ngày và tiền thường về phương thức thanh toán gốc, nhưng có trường hợp bằng voucher. Prototype không được cam kết chắc chắn thời gian hoặc phương thức khi chưa có dữ liệu xác nhận cho đặt chỗ.
+
+**Nếu quá hạn hoặc không xác nhận:**
+- Không gọi `gui_yeu_cau_hoan_ve`.
+- Giữ trạng thái chưa gửi yêu cầu hoàn.
+- Cho phép khách tiếp tục xem các lựa chọn hoặc chuyển nhân viên.
+- Không tự gửi yêu cầu chỉ vì khách không phản hồi.
+
+**Lý do theo cost-of-error:**
+- **Sai thì ai chịu gì:** Khách có thể mất cơ hội đổi chuyến, không thể tự rút lại yêu cầu hoàn và phải chờ xử lý tiền. Đây là rủi ro trong case 4.
+- **Đảo lại được không:** Không. Tool `gui_yeu_cau_hoan_ve` không hỗ trợ hủy yêu cầu sau khi gửi.
+- **Chờ người thì mất gì:** Khách cần thêm một bước xác nhận, nhưng chi phí này nhỏ hơn hậu quả gửi hoàn sai không thể đảo ngược.
+
+**Phương án đã cân nhắc:**
+- Tự làm: AI tự gửi yêu cầu khi đoán khách muốn hoàn.
+- Cần người duyệt: Khách kiểm tra và xác nhận trước khi gửi.
+- Cấm: AI không được gửi yêu cầu hoàn.
+
+**Quyết định:** Chọn cần người duyệt. Loại tự làm vì rủi ro không thể đảo ngược; loại cấm vì khách sẽ mất lợi ích của việc hỗ trợ hoàn vé ngay trong ứng dụng.
+
+---
+
+#### Tool 5 — `chuyen_nhan_vien`
+
+**Mức nhóm chọn: TỰ LÀM**
+
+**Lý do theo cost-of-error:**
+- **Sai thì ai chịu gì:** Nếu chuyển nhân viên không cần thiết, khách có thể mất thời gian chờ và nhân viên phải xử lý thêm một yêu cầu.
+- **Đảo lại được không:** Tool có thể đảo lại theo dữ liệu track; không trực tiếp thay đổi vé hoặc tiền.
+- **Chờ người thì mất gì:** Nếu AI phải xin phép trước cả khi chuyển hỗ trợ, khách gặp sự cố nghiêm trọng có thể chậm được xử lý.
+
+**Phương án đã cân nhắc:**
+- Tự làm: AI chuyển hỗ trợ khi gặp ca vượt thẩm quyền hoặc khách yêu cầu.
+- Cần người duyệt: AI phải xin phép trước khi chuyển.
+- Cấm: Không cho AI chuyển nhân viên.
+
+**Quyết định:** Chọn tự làm. Loại cần duyệt vì thêm bước không cần thiết khi khách đã gặp sự cố; loại cấm vì các tình huống như trẻ nhỏ bay một mình, đổi tên hành khách và đổi vé nhầm cần sự hỗ trợ của con người.
+
+**Luật an toàn:** AI chỉ chuyển những thông tin phục vụ xử lý ca, gồm mã đặt chỗ, vấn đề khách gặp và trạng thái các thao tác liên quan. Không yêu cầu OTP hoặc thông tin thẻ thanh toán.
+
+---
+
+### 4.3. Tool khó xếp mức tự chủ nhất
+
+**Tool được chọn: `giu_cho_chuyen_moi`**
+
+Đây là tool khó xếp nhất vì hai hướng lựa chọn đều có chi phí:
+
+- Nếu AI tự giữ chỗ, khách có thể được bảo vệ khỏi nguy cơ hết ghế, nhưng AI có thể giữ nhầm.
+- Nếu bắt buộc duyệt trước khi giữ, khách kiểm soát được lựa chọn nhưng có nguy cơ hết ghế trong lúc chờ.
+
+**Các phương án để hai thành viên thảo luận:**
+
+| Phương án | Lợi ích | Cái giá |
+|---|---|---|
+| Tự làm không điều kiện | Nhanh nhất | Có thể giữ sai chuyến hoặc không đủ số ghế như case 6. |
+| Cần người duyệt trước khi giữ | Khách kiểm soát chặt chẽ | Khách có thể mất chỗ khi đang chờ xác nhận. |
+| Tự làm có điều kiện | Giữ được tốc độ, giảm rủi ro | Phải có bước kiểm tra dữ liệu và giới hạn rõ ràng. |
+| Cấm giữ chỗ | Không phát sinh hành động giữ nhầm | Khách không được bảo vệ khỏi nguy cơ hết chỗ khi cân nhắc. |
+
+**Ý kiến từng thành viên (cần điền đúng sau khi thảo luận):**
+
+
+**1. Sơn — Chọn mức "Cần người duyệt"**
+
+Sơn cho rằng AI cần được người dùng xác nhận trước khi giữ chỗ vì:
+
+- AI có thể hiểu sai nhu cầu và giữ nhầm chuyến bay, chẳng hạn khách nói "sáng mai" nhưng có hai chuyến BM 201 lúc 07:00 và BM 205 lúc 09:30.
+- Việc giữ nhầm có thể khiến khách tưởng đã có chỗ trên chuyến mong muốn, từ đó bỏ lỡ những lựa chọn phù hợp hơn.
+- Bước xác nhận giúp hành khách kiểm soát chuyến bay được giữ, số lượng người và thời gian khởi hành.
+
+**Cái giá phải trả:** Khách cần thêm một bước xác nhận. Trong tình huống khẩn cấp, thời gian chờ có thể khiến chuyến bay phù hợp hết chỗ.
+
+**2. Phong — Chọn mức "Tự làm có điều kiện"**
+
+Thành viên còn lại cho rằng AI có thể tự giữ chỗ nếu đáp ứng các điều kiện an toàn vì:
+
+- Tool `giu_cho_chuyen_moi` chỉ giữ chỗ trong 20 phút rồi tự nhả, không trực tiếp thay đổi vé hoặc sử dụng lần đổi miễn phí.
+- Khi khách đã nêu rõ chuyến muốn đi, AI có thể tự kiểm tra số ghế và giữ chỗ ngay, giảm nguy cơ hết chỗ trong lúc khách cân nhắc.
+- AI chỉ được tự giữ khi xác định chính xác chuyến bay, số hành khách và có đủ ghế. Nếu yêu cầu mơ hồ hoặc có nhiều lựa chọn, AI phải hỏi lại trước khi giữ.
+
+**Cái giá phải trả:** AI vẫn có thể giữ nhầm nếu dữ liệu không chính xác hoặc hiểu sai yêu cầu. Vì vậy, hệ thống phải hiển thị rõ chuyến đã giữ và thời hạn 20 phút, đồng thời không được tự đổi vé nếu khách chưa xác nhận.
+
+### Quyết định cuối cùng của nhóm (đề xuất)
+
+Nhóm chọn **"Tự làm có điều kiện"** đối với `giu_cho_chuyen_moi`.
+
+Lý do là việc giữ chỗ có thời hạn 20 phút và không trực tiếp thay đổi vé, nên rủi ro thấp hơn `doi_chuyen_bay`. Tuy nhiên, để giải quyết lo ngại của Sơn, AI chỉ được tự giữ khi xác định rõ chuyến bay, hành khách và đủ số ghế. Nếu thông tin còn mơ hồ, AI phải hỏi lại.
+
+Phương án này giúp khách không phải chờ xác nhận không cần thiết khi yêu cầu đã rõ, đồng thời hạn chế nguy cơ giữ nhầm chuyến.
+
+**Phương án đề xuất để nhóm chốt:** Tự làm có điều kiện.
+
+AI được gọi `giu_cho_chuyen_moi` khi đã có chuyến phù hợp, đủ chỗ cho hành khách liên quan và đáp ứng các điều kiện an toàn. Nếu ý định khách chưa rõ hoặc có nhiều lựa chọn không thể tự phân biệt, AI phải hỏi trước.
+
+**Liên hệ §2:**
+- Case 6: Không được khẳng định giữ đủ chỗ BM 217 cho hai người khi chỉ còn một ghế.
+- Case 7: Khi khách nói "sáng mai" và có hai chuyến, AI phải làm rõ lựa chọn trước khi giữ.
+- Case 5: Việc giữ chỗ không đồng nghĩa có quyền gọi `doi_chuyen_bay`; đổi vé vẫn cần duyệt.
+
+**Vì sao không chọn các phương án còn lại?**
+
+Tự làm không điều kiện có nguy cơ gây hiểu nhầm và giữ sai. Cần duyệt cho mọi lần giữ hoặc cấm giữ làm giảm khả năng hỗ trợ nhanh, trong khi hành động giữ chỉ có hiệu lực 20 phút và chưa đổi vé.
+
+Vì vậy, tự làm có điều kiện là phương án cân bằng giữa tốc độ hỗ trợ và kiểm soát rủi ro.
+
+---
+
+### 4.4. Thử mức tự chủ trên 3 kịch bản
+
+#### Kiểm thử 1 — Case 4: Đã gửi hoàn vé nhưng khách đổi ý
+
+**Tình huống:** Khách muốn đổi sang BM 201 lúc 07:00 nhưng trước đó yêu cầu hoàn vé đã được gửi.
+
+**Quy trình theo thiết kế:**
+1. AI dùng `tra_cuu_dat_cho` để kiểm tra thông tin đặt chỗ.
+2. Nếu hệ thống có trạng thái hoàn vé đã được xác nhận, AI thông báo yêu cầu đã gửi và không thể tự hủy.
+3. AI không gọi tiếp `gui_yeu_cau_hoan_ve` hoặc `doi_chuyen_bay` để cố sửa lỗi.
+4. AI gọi `chuyen_nhan_vien` để chuyển ca và ngữ cảnh liên quan.
+
+**Đánh giá:**
+- Cái sai có bị chặn không? **Có đối với việc gửi hoàn mới:** yêu cầu xác nhận trước khi gửi. Tuy nhiên, nếu yêu cầu đã gửi trước đó thì không thể tự đảo ngược.
+- AI còn làm khi lẽ ra phải hỏi không? **Không:** AI không tự đổi vé hoặc gửi thêm yêu cầu.
+- Khách có phải chờ vô ích không? **Không:** AI tự kiểm tra và chuyển hỗ trợ ngay; tuy nhiên khách vẫn cần chờ nhân viên xử lý hậu quả.
+
+**Kết luận:** Mức tự chủ ngăn gửi hoàn thiếu xác nhận và hạn chế hành động tiếp theo sau lỗi, nhưng không khôi phục được yêu cầu hoàn đã gửi.
+
+#### Kiểm thử 2 — Case 5: AI đã đổi nhầm chuyến
+
+**Tình huống:** AI đã đổi sang BM 205 lúc 09:30 trong khi khách muốn BM 201 lúc 07:00.
+
+**Quy trình theo thiết kế:**
+1. AI kiểm tra thông tin chuyến và trạng thái đổi vé.
+2. Nếu xác nhận đã đổi nhầm, AI hiển thị chuyến hiện tại, chuyến khách mong muốn và thông báo sự cố.
+3. Không tự gọi `doi_chuyen_bay` lần nữa.
+4. Không hứa đổi lại miễn phí khi không có căn cứ.
+5. Chuyển nhân viên để kiểm tra khả năng xử lý tiếp.
+
+**Đánh giá:**
+- Cái sai có bị chặn không? **Có đối với luồng đổi vé mới:** luôn cần xác nhận chuyến và hành khách. Nhưng một lỗi đã xảy ra thì không thể coi là được khắc phục hoàn toàn.
+- AI còn làm khi lẽ ra phải hỏi không? **Không:** hệ thống không được tự đổi lần hai.
+- Khách có phải chờ vô ích không? **Không:** AI có thể tra cứu và giải thích ngay, nhưng việc sửa lỗi có thể phải chờ nhân viên.
+
+**Kết luận:** Quy tắc duyệt giúp ngăn đổi nhầm trước khi thực hiện và giảm nguy cơ sửa sai bằng một thao tác sai tiếp theo.
+
+#### Kiểm thử 3 — Case bình thường: Khách chọn BM 201 cho cả hai người
+
+**Tình huống:** Khách nói: "Tôi muốn chuyến BM 201 lúc 07:00 ngày 13/11 cho cả Nguyễn Minh An và Nguyễn Gia Bình."
+
+**Quy trình theo thiết kế:**
+1. AI tự gọi `tra_cuu_dat_cho`.
+2. Xác nhận BM 201 có 9 chỗ, đủ cho hai hành khách theo dữ liệu dựng.
+3. AI có thể gọi `giu_cho_chuyen_moi` để giữ chỗ trong 20 phút và thông báo thời hạn.
+4. AI hiển thị màn hình xác nhận đổi vé, giải thích sẽ sử dụng lần đổi miễn phí duy nhất.
+5. Chỉ sau khi khách bấm xác nhận, AI mới gọi `doi_chuyen_bay`.
+6. Hiển thị trạng thái thực hiện thực tế, không báo thành công khi tool chưa xác nhận.
+
+**Đánh giá:**
+- Cái sai có bị chặn không? **Có:** kiểm tra dữ liệu trước khi giữ và xác nhận trước khi đổi.
+- AI còn làm khi lẽ ra phải hỏi không? **Không:** chỉ giữ chỗ theo điều kiện, không tự đổi vé.
+- Khách có phải chờ vô ích không? **Không:** AI tự tra cứu và giữ chỗ, không bắt khách đợi nhân viên cho các bước rủi ro thấp.
+
+**Kết luận:** Luồng bình thường vẫn nhanh, có thể giữ chỗ trong lúc khách quyết định và không bỏ qua bước xác nhận quan trọng.
+
+---
+
+### 4.5. Luật bổ sung và tách bước tool
+
+Nhóm bổ sung 3 luật:
+
+1. Trước khi giữ hoặc đổi chuyến, phải kiểm tra đủ số ghế
+   cho các hành khách liên quan (ngăn case 6).
+2. Trước khi đổi chuyến hoặc gửi yêu cầu hoàn vé, phải hiển thị
+   thông tin dự kiến và yêu cầu khách xác nhận rõ ràng
+   (ngăn case 2, 7, 8).
+3. Khi thao tác khó hoàn tác đã xảy ra, AI không được tự hứa
+   khôi phục mà phải chuyển nhân viên (case 4, 5).
+
+Nhóm tách thao tác đổi vé và hoàn vé thành hai bước:
+- Xem trước: hiển thị thông tin, chưa thay đổi trạng thái.
+- Thực hiện: chỉ gọi tool sau khi khách xác nhận.
+
+Đây là các bước logic bổ sung, không phải tool có sẵn trong T3.
+
+---
+
+### 4.6. Mức tự chủ thay đổi lời hứa với người dùng
+
+Với `doi_chuyen_bay`, nhóm chọn mức "cần người duyệt"
+thay vì "tự làm".
+
+- Trước: "AI tự đổi chuyến bay giúp bạn."
+- Sau: "AI tìm chuyến phù hợp và hỗ trợ giữ chỗ,
+  nhưng chỉ đổi vé sau khi bạn xác nhận."
+
+Nhóm chấp nhận thêm một bước xác nhận để tránh đổi nhầm,
+mất lần đổi miễn phí và gây thiệt hại cho hành khách.
 
 ## §5. Prototype  (chặng 5)
 - Link hoặc file · công cụ · phần nào mock · có lời gọi AI thật không.
