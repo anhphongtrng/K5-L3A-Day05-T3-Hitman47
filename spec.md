@@ -1,11 +1,11 @@
 ﻿# Bài nộp LAB5 — [Track] · Nhóm [tên]
 [Danh sách thành viên và việc mỗi người làm — copy bảng từ README]
-**Lớp:** ____ · **Bàn / zone:** ____ · **Track:** ____
+**Lớp:** L3A · **Bàn / zone:** 3 · **Track:** 3
 
 | Họ và Tên | Mã Học Viên | Việc đã làm |
 |---|---|---|
 |  |  |  |
-|  |  |  |
+| Võ Sỹ Thái Sơn |  |  |
 |  |  |  |
 
 
