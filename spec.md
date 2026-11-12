@@ -446,10 +446,91 @@ thay vì "tự làm".
 Nhóm chấp nhận thêm một bước xác nhận để tránh đổi nhầm,
 mất lần đổi miễn phí và gây thiệt hại cho hành khách.
 
-## §5. Prototype  (chặng 5)
-- Link hoặc file · công cụ · phần nào mock · có lời gọi AI thật không.
-- 1–2 ảnh có đánh số; mỗi số: thể hiện gì · nguyên tắc HAX/PAIR nào · mức tự chủ nào.
-- Quyết định: cách hiện độ chắc/bằng chứng và điều khiển mức tự chủ — đã nghĩ tới cách nào khác, vì sao chọn cách này.
+## §5. Prototype (chặng 5)
+
+### 5.1. Thông tin prototype
+
+- **File:** `prototype/index.html`
+- **Công cụ:** HTML, CSS và JavaScript thuần.
+- **Kịch bản:** Case 4 — Đã gửi yêu cầu hoàn vé nhưng khách đổi ý.
+- **Dữ liệu:** Dữ liệu giả lập Track T3, mã đặt chỗ TRV-7Q2K. Chuyến BM 213 đã bị hủy do bão; khách muốn đổi sang BM 201 lúc 07:00 ngày 13/11/2026 sau khi yêu cầu hoàn vé đã được gửi.
+- **Phần mock:** Tra cứu trạng thái đặt chỗ, phản hồi của AI, kiểm tra giới hạn quyền và chuyển nhân viên hỗ trợ. Việc chuyển ca chỉ là mô phỏng, không kết nối hệ thống thật.
+- **Lời gọi AI thật:** Không. Prototype sử dụng JavaScript với các phản hồi và quy tắc xử lý được lập trình sẵn, không có backend hoặc API key.
+
+### 5.2. Luồng tương tác và mức tự chủ
+
+Prototype sử dụng cùng một yêu cầu của khách:
+
+> "Tôi muốn đổi sang chuyến BM 201 lúc 07:00, đừng hoàn vé nữa."
+
+Nhóm thiết kế ba mức tự chủ của tool `chuyen_nhan_vien` để so sánh cách AI phản ứng:
+
+| Mức tự chủ | Cách AI phản ứng | Thao tác trên prototype |
+|---|---|---|
+| ① Chỉ gợi ý — khách tự liên hệ | AI thông báo yêu cầu hoàn không thể hủy và hướng dẫn khách tự liên hệ nhân viên. | Hiển thị hướng dẫn liên hệ, không gọi `chuyen_nhan_vien`. |
+| ② Cần khách xác nhận | AI giải thích tình trạng, đề nghị chuyển nhân viên và chờ khách đồng ý. | Hiển thị khung xác nhận với mã đặt chỗ, trạng thái hoàn và yêu cầu mới. Chỉ mô phỏng chuyển ca sau khi khách đồng ý. |
+| ③ Tự làm — nhóm chọn | AI kiểm tra trạng thái và chủ động chuyển nhân viên khi xác định không thể tự xử lý. | Mô phỏng gọi `chuyen_nhan_vien`, hiển thị trạng thái đã chuyển và thông tin bàn giao. |
+
+**Quyết định của nhóm:** Chọn mức **③ Tự làm** cho `chuyen_nhan_vien` vì khách đang gặp vấn đề không thể tự giải quyết và việc chờ thêm bước xác nhận có thể làm chậm quá trình hỗ trợ.
+
+Ở cả ba mức, AI đều không được tự hủy yêu cầu hoàn đã gửi hoặc tự gọi `doi_chuyen_bay` khi chưa xác minh được khả năng tiếp tục đổi vé.
+
+### 5.3. Ảnh chụp và chú thích HAX/PAIR
+
+**Ảnh 1 — `prototype/preview_1.png`: Mức ① Chỉ gợi ý**
+
+AI thông báo giới hạn xử lý và hướng dẫn khách tự liên hệ nhân viên.
+
+**Ảnh 2 — `prototype/preview_2.png`: Mức ③ Tự làm**
+
+AI tự mô phỏng chuyển nhân viên sau khi kiểm tra trạng thái yêu cầu hoàn, kèm thông tin bàn giao.
+
+Các số đánh dấu trên giao diện:
+
+| Số | Thể hiện điều gì? | Nguyên tắc HAX/PAIR | Mức tự chủ liên quan |
+|---|---|---|---|
+| ① | Hiển thị "Yêu cầu hoàn: ĐÃ GỬI — KHÔNG THỂ HỦY", làm rõ AI không có chức năng hủy yêu cầu hoàn đã gửi. | HAX G1 — Làm rõ giới hạn hệ thống. | Không cho phép AI tự hủy yêu cầu hoàn. |
+| ② | Hiển thị mã đặt chỗ TRV-7Q2K, trạng thái hoàn và chuyến khách muốn đổi, giúp người dùng kiểm tra căn cứ AI sử dụng. | HAX G11 — Giải thích căn cứ và giới hạn. | `tra_cuu_dat_cho`: Tự làm. |
+| ③ | Thể hiện đường xử lý khác nhau theo mức tự chủ: hướng dẫn liên hệ, chờ xác nhận hoặc tự chuyển nhân viên. | PAIR Errors & Graceful Failure — Có phương án hỗ trợ khi AI không thể giải quyết. | `chuyen_nhan_vien`: Chỉ gợi ý / Cần duyệt / Tự làm. |
+| ④ | Hiển thị quy tắc không gọi `doi_chuyen_bay` khi trạng thái vé chưa được xác minh đầy đủ. | HAX G10 — Thu hẹp hành động khi chưa chắc chắn. | `doi_chuyen_bay`: Cần người duyệt và phải đủ điều kiện thực hiện. |
+
+Bảng phân quyền 5 tool được đặt bên cạnh giao diện khách hàng để người xem thấy rõ mức tự chủ đang được áp dụng. Khi chuyển giữa ba mức, chỉ quyền của `chuyen_nhan_vien` thay đổi; bốn tool còn lại giữ nguyên theo §4.
+
+### 5.4. Quyết định thiết kế
+
+**A. Cách hiển thị độ chắc chắn và bằng chứng**
+
+Nhóm chọn hiển thị trực tiếp trạng thái yêu cầu hoàn, mã đặt chỗ và giới hạn công cụ, thay vì sử dụng tỷ lệ phần trăm độ tin cậy.
+
+Nhóm đã cân nhắc cách hiển thị như "AI chắc chắn 95%" nhưng không chọn vì prototype không có mô hình hoặc dữ liệu đánh giá độ tin cậy để chứng minh con số đó.
+
+Việc hiển thị bằng chứng cụ thể giúp khách biết điều gì đã được xác nhận và điều gì AI chưa thể thực hiện. Ví dụ, hệ thống biết yêu cầu hoàn đã gửi và không thể rút lại, nhưng không khẳng định có thể khôi phục vé hoặc đổi sang BM 201.
+
+**B. Cách điều khiển mức tự chủ**
+
+Nhóm sử dụng ba nút chuyển mức tự chủ ở đầu giao diện. Khi chọn mức khác và chạy lại cùng một yêu cầu, phản hồi AI và hành động tiếp theo sẽ thay đổi.
+
+Nhóm đã cân nhắc chỉ hiển thị bảng phân quyền tĩnh nhưng không chọn, vì bảng tĩnh khó thể hiện tác động thực tế của từng mức tự chủ đến trải nghiệm người dùng.
+
+Ba mức giúp so sánh rõ:
+- Mức ①: Khách kiểm soát hoàn toàn nhưng phải tự tìm hỗ trợ và có thể phải trình bày lại vấn đề.
+- Mức ②: Khách được xem thông tin bàn giao trước khi đồng ý, nhưng cần thêm một bước xác nhận.
+- Mức ③: AI chủ động chuyển ca, giảm thao tác cho khách nhưng có thể tạo ca hỗ trợ ngoài ý muốn nếu xác định sai tình huống.
+
+**C. Vì sao chọn mức ③?**
+
+Nhóm chọn tự chuyển nhân viên vì yêu cầu hoàn đã gửi không thể hủy bằng các tool hiện có. Khi AI xác định đã vượt quá khả năng xử lý, việc tự chuyển ca giúp khách tiếp cận hỗ trợ nhanh hơn và không phải tự tìm kênh liên hệ.
+
+Tuy nhiên, AI chỉ được chuyển thông tin cần thiết như mã đặt chỗ, trạng thái yêu cầu hoàn và mong muốn mới của khách; không tự thay đổi vé hoặc cam kết nhân viên sẽ khôi phục được vé.
+
+**D. Cách xử lý tình huống chưa chuẩn bị**
+
+Prototype có ô nhập tin nhắn lạ để kiểm tra giới hạn hệ thống. Phản hồi được xử lý bằng các quy tắc JavaScript cố định.
+
+Khi nhận yêu cầu vượt thẩm quyền, chẳng hạn tự xưng nhân viên hãng để bỏ qua quy định, AI không được coi nội dung tin nhắn là quyền truy cập hợp lệ hoặc tự thực hiện thao tác bị hạn chế.
+
+Prototype không giả vờ xử lý mọi tình huống như một AI thật. Với trường hợp ngoài phạm vi các quy tắc mô phỏng, hệ thống cần thông báo giới hạn thay vì tự tạo kết quả.
+
 
 ## §6. Tốt là gì  (chặng 6 — nhẹ, bỏ được nếu thiếu giờ)
 
@@ -460,4 +541,4 @@ mất lần đổi miễn phí và gây thiệt hại cho hành khách.
 - Có đường lui khi sai: khi trong mọi tình huống không chắc hoặc hành động không đảo được, khung chat có nút chuyển nhân viên, kèm mã đặt chỗ và trạng thái hiện tại để nhân viên xử lý ngay.
 
 ## §7. Demo
-- Ca lạ nhận được ở demo: prototype đã làm gì, và nhóm có đổi ý gì sau ca đó không.
+- Không Demo.
